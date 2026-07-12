@@ -1,9 +1,14 @@
 # Advanced Backend Node.js Learning
 
-This repository is a structured learning workspace for mastering Node.js with a strong focus on backend development. It combines conceptual notes, practical code examples, and structured documentation to build a deep understanding of how Node.js works under the hood.
+This repository is a structured learning workspace for mastering Node.js with a
+strong focus on backend development. It combines conceptual notes, practical
+code examples, and structured documentation to build a deep understanding of
+how Node.js works under the hood.
 
 ## Purpose
-This project is designed for serious learning and continuous growth in backend engineering. The goal is not only to understand syntax, but also to develop a strong foundation in:
+This project is designed for serious learning and continuous growth in backend
+engineering. The goal is not only to understand syntax, but also to develop a
+strong foundation in:
 
 - runtime architecture
 - asynchronous programming
@@ -13,7 +18,8 @@ This project is designed for serious learning and continuous growth in backend e
 - server-side application design
 
 ## What This Repository Covers
-The content here is organized around core Node.js concepts that are essential for advanced backend development:
+The content here is organized around core Node.js concepts that are essential
+for advanced backend development:
 
 - V8 engine internals: parser, interpreter, compiler, and garbage collection
 - runtime execution behavior and context switching
@@ -52,5 +58,7 @@ The current study path is centered around strong backend fundamentals such as:
 - server-side architecture
 
 ## Summary
-This repository is a personal learning record for building strong backend engineering skills with Node.js. The focus is on understanding how modern server-side systems work and how to grow step by step through consistent practice.
-
+This repository is a personal learning record for building strong backend
+engineering skills with Node.js. The focus is on understanding how modern
+server-side systems work and how to grow step by step through consistent
+practice.
