@@ -34,37 +34,23 @@ The content here is organized around core Node.js concepts that are essential fo
 - [docs](docs): chapter-wise study notes and technical documentation
 
 ## Learning Approach
-A strong backend learning routine should be practical and consistent. This repository follows a simple method:
+This repository is meant for continuous learning and practical understanding. The workflow is simple:
 
 1. Study one concept deeply.
 2. Write clear notes in the documentation.
 3. Verify the concept through a code example.
-4. Refine understanding by explaining it in simple professional language.
-5. Commit progress regularly to track growth.
+4. Review and improve the explanation over time.
+5. Keep updating the repository as learning progresses.
 
-## Recommended Study Workflow
-- Read one concept at a time.
-- Connect theory with real code.
-- Compare behavior across examples.
-- Keep notes concise, structured, and reusable.
-- Review previous topics regularly to strengthen retention.
+## Current Focus
+The current study path is centered around strong backend fundamentals such as:
 
-## Next Milestones
-The next stage of this learning journey will expand into:
-
-- Express.js and REST APIs
-- middleware and request handling
-- authentication and authorization
-- databases and ORMs
-- testing and debugging
-- deployment and production readiness
-
-## Commit Example
-```bash
-git add .
-git commit -m "Expand Node.js runtime and event loop documentation"
-```
+- runtime behavior
+- asynchronous execution
+- event loop concepts
+- modules and package management
+- server-side architecture
 
 ## Summary
-This repository is more than a note-taking space; it is a learning foundation for building strong backend engineering skills with Node.js. The focus is on understanding how modern server-side systems work, not just writing code that runs.
+This repository is a personal learning record for building strong backend engineering skills with Node.js. The focus is on understanding how modern server-side systems work and how to grow step by step through consistent practice.
 
