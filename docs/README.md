@@ -8,7 +8,8 @@ This folder contains the chapter-wise notes and learning references for this Nod
 - [Chapter 2: Globals and Modules](chapters/02-modules-and-globals.md)
 - [Chapter 3: File System and Async I/O](chapters/03-file-system-and-async-io.md)
 - [Chapter 4: Event Loop and Queues](chapters/04-event-loop-and-queues.md)
-- [Chapter 5: ES Modules vs CommonJS](chapters/05-es-modules-vs-commonjs.md)
+- [Chapter 5: Modules in Node.js](chapters/05-es-modules-vs-commonjs.md)
+- [Chapter 6: Package, Library, and Module Management](chapters/06-package-management-and-paths.md)
 
 ## Learning Workflow
 
