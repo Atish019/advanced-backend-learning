@@ -10,6 +10,7 @@ This folder contains the chapter-wise notes and learning references for this Nod
 - [Chapter 4: Event Loop and Queues](chapters/04-event-loop-and-queues.md)
 - [Chapter 5: Modules in Node.js](chapters/05-es-modules-vs-commonjs.md)
 - [Chapter 6: Package, Library, and Module Management](chapters/06-package-management-and-paths.md)
+- [Project 0: Telegram Bot Example](../Project_0/README.md)
 
 ## Learning Workflow
 

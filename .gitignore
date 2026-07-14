@@ -1,3 +1,11 @@
 node_modules/
 .DS_Store
 npm-debug.log*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Lockfiles
+package-lock.json
