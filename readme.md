@@ -48,14 +48,6 @@ This repository is meant for continuous learning and practical understanding. Th
 4. Review and improve the explanation over time.
 5. Keep updating the repository as learning progresses.
 
-## Current Focus
-The current study path is centered around strong backend fundamentals such as:
-
-- runtime behavior
-- asynchronous execution
-- event loop concepts
-- modules and package management
-- server-side architecture
 
 ## Summary
 This repository is a personal learning record for building strong backend
