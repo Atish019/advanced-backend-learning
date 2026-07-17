@@ -11,6 +11,7 @@ This folder contains the chapter-wise notes and learning references for this Nod
 - [Chapter 5: Modules in Node.js](chapters/05-es-modules-vs-commonjs.md)
 - [Chapter 6: Package, Library, and Module Management](chapters/06-package-management-and-paths.md)
 - [Project 0: Telegram Bot Example](../Project_0/README.md)
+- [Chapter 7: Networking Basics](chapters/07-networking-basics.md)
 
 ## Learning Workflow
 
