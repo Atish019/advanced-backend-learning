@@ -86,9 +86,9 @@ The image above illustrates the TCP 3-way handshake (SYN → SYN+ACK → ACK).
 ## Examples (referenced files)
 Runnable example code is available in the top-level `examples/` folder (repo root). This keeps documentation concise and examples runnable from the project root.
 
-- TCP socket demo (Node.js): [server.js](../../examples/tcp/server.js) and [client.js](../../examples/tcp/client.js)
-- DNS lookup example: [dns-lookup.js](../../examples/dns-lookup.js)
-- HTTP request example (axios): [http-axios.js](../../examples/http-axios.js)
+- TCP socket demo (Node.js): [server.js](../../Networking_Basics/tcp/server.js) and [client.js](../../Networking_Basics/tcp/client.js)
+- DNS lookup example: [dns-lookup.js](../../Networking_Basics/dns-lookup.js)
+- HTTP request example (axios): [http-axios.js](../../Networking_Basics/http-axios.js)
 
 
 
