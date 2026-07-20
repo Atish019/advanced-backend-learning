@@ -1,6 +1,6 @@
 # Chapter 07 — Networking Basics
 
-This chapter is a concise, practical summary of networking concepts and the network stack based on your handwritten notes.
+This chapter is a concise, practical summary of networking concepts and the network stack based on my handwritten notes.
 
 ## Overview
 - A network is a connection of entities (machines) that share resources and data.
