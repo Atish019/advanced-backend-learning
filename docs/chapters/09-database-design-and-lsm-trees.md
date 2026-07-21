@@ -160,3 +160,236 @@ A Bloom filter is a probabilistic data structure for testing whether an element 
 ### Why Use Bloom Filters in Databases?
 - Avoid reading SSTables for keys that don't exist.
 - Example: If a key is not in the Bloom filter, we skip checking that SSTable entirely, saving disk I/O.
+
+## 7. Sparse Index
+
+A sparse index doesn't store every key; instead, it stores **starting keys of each block** along with their offsets on disk.
+
+### Example
+
+```
+SSTable File Structure:
+┌─────────────────────┬─────────────────────┬──────────────┐
+│  Block 1            │  Block 2            │  Block 3     │
+│  Keys: a...f        │  Keys: g...m        │  Keys: n...z │
+└─────────────────────┴─────────────────────┴──────────────┘
+
+Sparse Index (kept in RAM for binary search):
+┌──────────────────────────────────┐
+│  Key: "a"  → Offset: 0(1) disk   │
+│  Key: "g"  → Offset: 0(1) disk   │
+│  Key: "n"  → Offset: 0(1) disk   │
+└──────────────────────────────────┘
+
+Search for "k":
+  Binary search on sparse index → "k" is >= "g" but < "n"
+  → Read Block 2
+```
+
+## 8. Compaction (Procedure to Remove Duplicates)
+
+Over time, multiple SSTables accumulate. Compaction merges them to:
+- Remove duplicate/stale entries.
+- Reclaim disk space.
+- Improve read performance (fewer SSTables to check).
+
+### How Compaction Works
+
+**Step 1: Flush Memtable as a New SSTable**
+```
+Active memtable (in RAM) → New immutable SSTable (on disk)
+```
+
+**Step 2: Maintain Offset Hashmap**
+```
+Offset Hashmap (in RAM):
+┌─────────────────────────────────┐
+│  key: user:123 → {               │
+│    latest_wal_file: wal-0001    │
+│    offset_in_wal: 512            │
+│  }                               │
+└─────────────────────────────────┘
+```
+
+**Step 3: Compaction Process**
+
+```
+Take 2 SSTables (sorted by key)
+        ↓
+Load in RAM & remove duplicates
+        ↓
+Keep latest entry for each key (discard old)
+        ↓
+Merge into 1 combined SSTable
+        ↓
+Write combined SSTable to disk
+        ↓
+Delete old SSTables
+```
+
+### Compaction Strategy
+
+```
+Level 0:  [SSTable-1] [SSTable-2] [SSTable-3]
+          (multiple can overlap)
+          
+          ↓ (compact when count exceeds threshold)
+          
+Level 1:  [Combined SSTable]
+          (sorted, no overlaps)
+          
+          ↓ (compact when size exceeds threshold)
+          
+Level 2:  [Another Combined SSTable]
+```
+
+**Note**: SSTables are immutable, so we can only create it and search on it, not update. Compaction allows us to eventually clean up old data.
+
+## 9. When to Add Data to Offset Hashmap
+
+### Key Decision: Timing of Hashmap Updates
+
+**Option A: Immediate Write (During Append to WAL)**
+```
+Write key-value pair to WAL file → Immediately add to offset hashmap
+Problem: High overhead, compaction can work on old files
+```
+
+**Option B: After WAL is Full**
+```
+When WAL reaches max size → Dump all data in a new file → Update hashmap
+Advantage: Batch updates, reduces hashmap update frequency
+Disadvantage: Larger WAL files; latest data stays in WAL longer
+```
+
+### Best Practice
+- Once your WAL file becomes inactive (no more writes), dump its data into an arrayed form.
+- Store unique keys in sorted order to optimize for searches.
+- The key advantage: Unique keys from memtable + sorted data = faster searches without full table scans.
+
+**Compaction Timing**:
+- All write operations happen in the active WAL file.
+- Reads can happen in any WAL file.
+- When no space is left, trigger compaction on old files.
+
+## 10. How Updates Work
+
+When updating an existing key:
+
+1. **Mark as new entry in memtable**: Don't override existing data; add a new entry with a sentinel value (like `{sentinel: <value>}` or a special marker).
+
+2. **Append to WAL**: Write the update to the active WAL file with a timestamp.
+
+3. **Set in Hashmap**: Record the key with the WAL file and offset.
+
+4. **During compaction**:
+   - If multiple entries exist for the same key, keep the latest one (identified by timestamp or order).
+   - Discard older entries.
+
+### Read Optimization with LRU Cache
+
+If a key is frequently accessed, an LRU cache can be maintained for faster retrieval:
+
+```
+Cache (in-memory LRU):
+├─ For frequently accessed keys, maintain a hashmap of data & address node
+├─ If a key is accessed, move its node to the "hot" end
+├─ When cache is full, evict the least-recently-used item
+└─ Searches are O(1) with LRU optimization on reads
+```
+
+## 11. Handling Duplicates Across Multiple Levels
+
+### Problem
+- Within a single SSTable: No duplicates (immutable, sorted).
+- Between multiple SSTables: Duplicates can exist (newer SSTable might have updated value).
+
+### Solution
+Maintain a **priority order**:
+1. Check memtable first.
+2. Check Level 0 SSTables (newest).
+3. Check Level 1 SSTables.
+4. And so on (older levels).
+
+This way, the latest value is always found first.
+
+## 12. Support for Partitioning and Sharding
+
+SSTables work well with sharding because:
+1. **Immutable data**: No cross-server consistency issues during splits.
+2. **Easy replication**: Copy SSTables to replicas; all are identical.
+3. **Data locality**: Each server holds a subset of partitioned keys.
+4. **Faster recombination**: Merging sorted SSTables is like merge-sort.
+
+### Architecture with Sharding
+```
+Master Node (writes)
+       ↓
+Write to WAL & Memtable
+       ↓
+Flush to SSTable
+       ↓
+Replicate to Replica Nodes (read-only)
+       ↓
+Each node: Independent
+       ↓
+compaction & LRU cache
+```
+
+## 13. LSM Trees in Action (RocksDB, Cassandra, DynamoDB)
+
+### RocksDB (Embedded Key-Value Store)
+- Used in Facebook's data infrastructure.
+- Built on LSM tree principles with configurable compaction strategies.
+
+### Cassandra (Distributed Database)
+- Uses SSTable format for immutable data.
+- Compaction happens periodically to reclaim disk space.
+
+### DynamoDB (AWS Managed Service)
+- Internally uses LSM-like structures for high throughput on SSD.
+
+### Why LSM Over B-trees?
+- **B-trees**: Optimized for random reads; writes require random disk I/O (slow).
+- **LSM**: Optimized for sequential writes; reads trade off for write throughput.
+
+In modern systems with high write throughput, LSM trees are preferred.
+
+## 14. Practical Design Choices
+
+### When to Use WAL
+- **Always**: Durability is critical. WAL ensures no data loss even after a crash.
+- Overhead: Sequential writes are fast, minimal performance penalty.
+
+### When to Use SSTables
+- **Always**: Immutable files simplify concurrency and compaction.
+- Alternative: In-memory only (loses durability; use for caches).
+
+### When to Use Bloom Filters
+- **Optimize read performance**: When negative lookups are common (keys that don't exist).
+- Space cost: ~1 byte per key, negligible compared to savings.
+
+### When to Use LRU Caching
+- **Hot working sets**: Cache the top 1-5% of frequently accessed keys.
+- Memory limit: Keep cache size bounded to prevent OOM.
+
+## 15. Design Patterns Summary
+
+```
+┌────────────────────────────────────────────────────┐
+│         Database Design Pattern (LSM)              │
+├────────────────────────────────────────────────────┤
+│  Write Path:                                       │
+│  User Data → WAL (durability) → Memtable (fast)   │
+│             ↓                                      │
+│  Memtable Full? → Flush to SSTable (immutable)    │
+│                                                    │
+│  Read Path:                                        │
+│  LRU Cache? → Memtable? → SSTables (bloom + idx)  │
+│                                                    │
+│  Background:                                       │
+│  Compaction (merge SSTables, remove stale data)   │
+└────────────────────────────────────────────────────┘
+```
+
+**Note**: This chapter is based on handwritten notes analyzing modern database internals. The concepts apply to any system dealing with high-throughput writes and consistent reads at scale.
