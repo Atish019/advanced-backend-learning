@@ -12,7 +12,6 @@ This folder contains the chapter-wise notes and learning references for this Nod
 - [Chapter 6: Package, Library, and Module Management](chapters/06-package-management-and-paths.md)
 - [Project 0: Telegram Bot Example](../Project_0/README.md)
 - [Chapter 7: Networking Basics](chapters/07-networking-basics.md)
-
 - [Chapter 8: Latency and Scaling](chapters/08-latency-and-scaling.md)
 
 ## Learning Workflow
