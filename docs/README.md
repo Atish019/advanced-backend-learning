@@ -13,6 +13,7 @@ This folder contains the chapter-wise notes and learning references for this Nod
 - [Project 0: Telegram Bot Example](../Project_0/README.md)
 - [Chapter 7: Networking Basics](chapters/07-networking-basics.md)
 - [Chapter 8: Latency and Scaling](chapters/08-latency-and-scaling.md)
+- [Chapter 9: Database Design and LSM Trees](chapters/09-database-design-and-lsm-trees.md)
 
 ## Learning Workflow
 
