@@ -329,3 +329,13 @@ Because SSTables are immutable, key deletion cannot remove data in-place on disk
 ```
 
 ---
+
+
+| Component | In-Memory (RAM) | On-Disk (HDD/SSD) | Time Complexity | Primary Role |
+| :--- | :--- | :--- | :--- | :--- |
+| **Active WAL** | ❌ No | ✅ Yes | $O(1)$ Write | Durability & crash recovery log |
+| **Memtable** | ✅ Yes | ❌ No | $O(\log N)$ Read/Write | Fast active write buffer & latest reads |
+| **SSTables** | ❌ No | ✅ Yes | $O(\log N)$ Binary Search | Immutable, sorted persistent storage |
+| **Sparse Index** | ✅ Yes | ❌ No | $O(\log B)$ RAM Lookup | Maps key ranges to SSTable block offsets |
+| **Bloom Filter** | ✅ Yes | ❌ No | $O(1)$ RAM Hit/Miss | Prevents disk seeks for missing keys |
+| **Tombstone** | ✅ Yes | ✅ Yes | $O(1)$ Append | Marks key deletion for compaction purge |
