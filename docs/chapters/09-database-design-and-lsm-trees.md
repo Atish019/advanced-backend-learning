@@ -1,395 +1,331 @@
 # Chapter 09 — Database Design and LSM Trees
 
-This chapter explores the fundamental data structures and design patterns behind modern key-value stores and databases, particularly focusing on Log-Structured Merge (LSM) trees, a widely-used architecture in systems like RocksDB, Cassandra, and DynamoDB.
+This chapter covers the end-to-end design of modern high-throughput databases and Log-Structured Merge (LSM) trees, synthesized from fundamental principles to complete architecture.
 
-## Initial Requirements for a Database
-To design an efficient database, we need to consider:
-- **Fast reads**: Retrieve data quickly without disk seeks.
-- **Fast writes**: Insert/update data efficiently (worst-case bounded latency).
-- **Durability**: Ensure data survives system crashes.
-- **Unstructured data**: Handle flexible, schema-less data.
-- **Scale to terabytes**: Manage large datasets efficiently.
+---
 
-## 1. Understanding RDBMS Schema
+## 1. Initial Database Requirements & RDBMS Limitations
 
-In traditional relational databases, we define a schema upfront:
+### Core System Requirements
+When designing a large-scale database system, we target five key properties:
+1. **Fast Reads**: Microsecond to low-millisecond lookup latency.
+2. **Fast Writes**: High write throughput with bounded latency (most critical for modern applications).
+3. **Durability**: Zero data loss during process crashes or power failures.
+4. **Unstructured / Schema-less Data**: Ability to handle heterogeneous key-value payloads.
+5. **Petabyte-Scale Storage**: Horizontal and vertical scalability across large datasets.
 
-**Example: Product Table**
-```
-- primary → id (4 bytes)
-- name → VARCHAR (variable, ~8 bytes)
-- price → FLOAT (8 bytes)
-- rating → FLOAT (8 bytes)
-```
+---
 
-Total size per product record: ~28 bytes
+### Storage Mechanics: RDBMS vs. NoSQL
 
-### Key Concept: Fixed Schema
-- **Database knows exact data size**: The database can calculate exactly where the next record starts.
-- **Ordering**: Data is organized by ID, enabling efficient lookups.
-- **Why reads are fast**: Because of fixed schema and defined size, the database knows exactly where to find each record on disk.
+#### RDBMS (Fixed Schema Model)
+In traditional relational databases (e.g., MySQL, PostgreSQL), schema structure and data types are defined upfront.
 
-## 2. Why Reading is Expensive
-
-### Sequential vs. Random Reads
-- **Sequential reads**: Faster—adjacent blocks are read efficiently from disk/SSD.
-- **Random reads**: Slower—each lookup can require a disk seek (10-20+ ms on HDD, sub-ms on SSD, microseconds in RAM).
-
-At scale:
-- **RAM access**: ~100ns (nanoseconds)
-- **SSD random read/write**: ~1-10 ms
-- **HDD random access**: ~10-20+ ms
-
-### The Challenge
-Even with indexes, traditional databases can struggle with:
-- High write throughput (especially on HDDs due to random seeks).
-- Hot data that doesn't fit in cache.
-- Compaction processes that can interfere with ongoing reads.
-
-## 3. Write-Ahead Logs (WAL)
-
-### Why Use WAL?
-
-Write-Ahead Logs solve the durability problem:
-
-1. **Append-only nature**: WAL files are written sequentially, which is much faster than random writes.
-2. **Fast writes**: Even on disk, sequential writes are orders of magnitude faster than random writes (e.g., 100 MB/s+ vs. 1 MB/s for random).
-3. **Crash recovery**: If the system crashes, we can replay the WAL to reconstruct the state.
-
-### How WAL Works
+- **Product Table Example**:
+  - `id` (Primary Key) $\rightarrow$ 8 bytes
+  - `name` $\rightarrow$ 60 bytes
+  - `price` $\rightarrow$ 8 bytes
+  - `rating` $\rightarrow$ 8 bytes
+  - **Total Row Size** = $8 + 60 + 8 + 8 = 84\text{ bytes}$
 
 ```
-Operation: SET (key=user:123, value={name: "Alice", age: 30})
-           ↓
-    Write to WAL (append-only) — O(1) disk operation
-           ↓
-    Optionally update in-memory structure
-           ↓
-    Return success to client (optional fsync for durability)
+HDD Storage Layout (Fixed Schema):
+┌──────────────────┬───────────────────────┬──────────────┬───────────────┐
+│ id (8B)          │ name (60B)            │ price (8B)   │ rating (8B)   │
+└──────────────────┴───────────────────────┴──────────────┴───────────────┘
+|<------------------------------- 84 Bytes ------------------------------>|
 ```
 
-### WAL in RDBMS
-- Most modern RDBMs (MySQL, PostgreSQL, etc.) use WAL as part of their data storage.
-- Example: PostgreSQL's Write-Ahead Log (WAL) file format stores all writes before updating the heap.
+- **Why RDBMS Reads/Updates Are Fast**:
+  - **Fixed Offset Jumping**: To read row $N$, jump directly to byte offset $\text{Start} + (N \times 84)$.
+  - **In-Place Overwrites**: Updating a column modifies fixed bytes at a known offset without altering the total row length.
 
-## 4. In-Memory Structure: Memtable
+---
 
-The Memtable is the first stop for writes:
-
-1. **Fast in-memory write**: New key-value pairs are inserted into a balanced tree or hash structure in RAM.
-2. **Low latency**: Reads from memtable are ~1000x faster than disk reads.
-3. **Small size**: Memtables are kept small (typically 2-3 tables in RAM at once), so they fit entirely in memory.
-
-### Memtable Design
-```
-Memtable (in RAM)
-┌─────────────────────────────────┐
-│  Balanced Tree Structure         │
-│  (e.g., Red-Black Tree, B-tree) │
-│                                  │
-│  Sorted by key                   │
-│  Fast lookup, insert, delete     │
-└─────────────────────────────────┘
-```
-
-When the memtable reaches a threshold (e.g., 64 MB):
-- **Flush to disk**: Convert to an immutable on-disk structure called SSTable.
-
-## 5. SSTables (Sorted Set Tables)
-
-An SSTable is an immutable, sorted file on disk containing key-value pairs.
-
-### Properties of SSTables
-- **Sorted by key**: All entries are ordered by key, enabling efficient range queries.
-- **Immutable**: Once written, SSTables never change. This simplifies concurrency.
-- **Read-optimized**: Binary search can find any key in O(log n) disk seeks.
-- **Small files**: Multiple small SSTables are easier to manage than one huge file.
-
-### Structure of an SSTable
+#### NoSQL / Key-Value (Schema-less Model)
+NoSQL stores values of variable types and sizes (numbers, strings, JSON blobs).
 
 ```
-┌────────────────────────────┐
-│  Header                    │
-├────────────────────────────┤
-│  Data Block 1              │
-│  (key-value pairs, sorted) │
-├────────────────────────────┤
-│  Data Block 2              │
-├────────────────────────────┤
-│  Index Block               │
-│  (key offsets for binary   │
-│   search within file)      │
-├────────────────────────────┤
-│  Bloom Filter              │
-│  (probabilistic presence   │
-│   test for fast misses)    │
-├────────────────────────────┤
-│  Footer (metadata)         │
-└────────────────────────────┘
+HDD Byte Representation (Schema-less Grid):
+┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐
+│ i │ p │ h │ o │ n │ e │ 1 │ 1 │ x │ x │ 4 │ . │ 8 │ i │ p │ ...
+└───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┘
+                                        |<─ 4B ─>|
 ```
 
-### Reading from SSTable
+- **In-Place Update Failure**:
+  If key `"macbook"` with value `4.9` (4 bytes) is updated to `"Apple"` (5 bytes):
+  $$\text{set}("macbook") \rightarrow "Apple" \quad (5\text{ Bytes})$$
+  Overwriting in-place corrupts adjacent data blocks because the new payload exceeds the allocated space.
 
-**Example: Find key `user:456`**
+---
 
-1. Check **Bloom Filter**: "Is this key possibly in this SSTable?" (O(1) RAM hit).
-   - If absent: Skip this SSTable entirely.
-   - If possibly present: Continue.
+## 2. Update Strategies & Evolution to Hashmap Offsets
 
-2. **Binary search the index** to find the SSTable's location: O(log n) RAM.
+To handle variable-length updates in key-value stores, two initial approaches exist:
 
-3. **Read the data block** from disk at the identified offset: O(1) disk seek.
+### Strategy 1: Data Splitting with Pointers
+- Write payload until space runs out, split the remainder, and write a pointer to the overflow block.
+- **Drawback**: Causes severe disk fragmentation, resulting in multiple random disk seeks per read.
 
-4. **Return the value**.
+### Strategy 2: Append-Only Writes with End-to-Start Scan
+- Never overwrite existing data. Append all updates to the end of the disk file.
+- **Drawback**: Read operations require an $O(n)$ linear scan from the end of the file.
 
-Reads from SSTable are fast because:
-- Bloom filter eliminates misses early.
-- Index enables binary search without reading the entire file.
-- Data is sorted, so we can use efficient seeking.
+---
 
-## 6. Bloom Filters
-
-A Bloom filter is a probabilistic data structure for testing whether an element is a member of a set.
-
-### Properties
-- **Space-efficient**: Uses a bit array, not full data storage.
-- **Fast**: O(1) lookup with a few hash function calls.
-- **False positives allowed**: Might say "possibly present" when it's absent (rare).
-- **No false negatives**: If it says "absent," it's definitely absent.
-
-### Why Use Bloom Filters in Databases?
-- Avoid reading SSTables for keys that don't exist.
-- Example: If a key is not in the Bloom filter, we skip checking that SSTable entirely, saving disk I/O.
-
-## 7. Sparse Index
-
-A sparse index doesn't store every key; instead, it stores **starting keys of each block** along with their offsets on disk.
-
-### Example
+### Optimized Solution: Append-Only File + RAM Hashmap
+Combine append-only disk writes with an in-memory index mapping keys to disk offsets:
 
 ```
-SSTable File Structure:
-┌─────────────────────┬─────────────────────┬──────────────┐
-│  Block 1            │  Block 2            │  Block 3     │
-│  Keys: a...f        │  Keys: g...m        │  Keys: n...z │
-└─────────────────────┴─────────────────────┴──────────────┘
+HDD (Append-Only Log File):
+Offset a: iphone11 : 4.9
+Offset b: iphone12 : 4.7
+Offset c: macbook   : 4.8
+Offset d: magsafe   : 3.2
+Offset e: macbook   : 'apple'  (Latest update appended)
 
-Sparse Index (kept in RAM for binary search):
-┌──────────────────────────────────┐
-│  Key: "a"  → Offset: 0(1) disk   │
-│  Key: "g"  → Offset: 0(1) disk   │
-│  Key: "n"  → Offset: 0(1) disk   │
-└──────────────────────────────────┘
-
-Search for "k":
-  Binary search on sparse index → "k" is >= "g" but < "n"
-  → Read Block 2
+RAM (In-Memory Hashmap):
+┌───────────┬───────────────┐
+│ Key       │ Disk Offset   │
+├───────────┼───────────────┤
+│ iphone11  │ offset a      │
+│ iphone12  │ offset b      │
+│ macbook   │ offset e      │  <-- (Pointer updated to offset e)
+│ magsafe   │ offset d      │
+└───────────┴───────────────┘
 ```
 
-## 8. Compaction (Procedure to Remove Duplicates)
+- **Execution Complexity**:
+  - **Read Path**: $O(1)$ RAM Hashmap lookup $\rightarrow$ $O(1)$ direct HDD offset seek.
+  - **Write Path**: $O(1)$ append to disk $\rightarrow$ $O(1)$ hashmap pointer update.
+  - Performance is **~100x faster for reads** and **~105x faster for writes** compared to random disk I/O.
 
-Over time, multiple SSTables accumulate. Compaction merges them to:
-- Remove duplicate/stale entries.
-- Reclaim disk space.
-- Improve read performance (fewer SSTables to check).
+- **Limitations of Single-File Hashmap Approach**:
+  1. **RAM Footprint**: Millions/billions of unique keys ($10^9$ keys) exhaust system memory.
+  2. **Disk Growth**: Old superseded entries accumulate indefinitely on disk.
+  3. **Volatility**: RAM hashmap is lost on crash and must be rebuilt by scanning the entire disk file.
 
-### How Compaction Works
+---
 
-**Step 1: Flush Memtable as a New SSTable**
-```
-Active memtable (in RAM) → New immutable SSTable (on disk)
-```
+## 3. The Write-Ahead Log (WAL) Architecture
 
-**Step 2: Maintain Offset Hashmap**
-```
-Offset Hashmap (in RAM):
-┌─────────────────────────────────┐
-│  key: user:123 → {               │
-│    latest_wal_file: wal-0001    │
-│    offset_in_wal: 512            │
-│  }                               │
-└─────────────────────────────────┘
-```
+### Purpose & Performance Advantage
+An append-only log file used for durability and fast writes is called a **Write-Ahead Log (WAL)**.
 
-**Step 3: Compaction Process**
+- **RDBMS Comparison**:
+  In SQL databases, updating indexed tables ($B^+$ Trees) requires $\log n$ random disk seeks per write. SQL systems use a WAL to record writes sequentially first ($O(1)$ I/O) before batch-updating $B^+$ Tree indexes in memory.
 
 ```
-Take 2 SSTables (sorted by key)
-        ↓
-Load in RAM & remove duplicates
-        ↓
-Keep latest entry for each key (discard old)
-        ↓
-Merge into 1 combined SSTable
-        ↓
-Write combined SSTable to disk
-        ↓
-Delete old SSTables
+SQL DB Write Paths:
+Write Request ──► Append to WAL (Sequential O(1) Disk Write) ──► Fast Ack
+                         │
+                         ▼ (Deferred Batch)
+                  Update B+ Tree Index (Log N Random Seeks)
 ```
 
-### Compaction Strategy
+---
+
+### Multi-File Chunked WAL Strategy
+Rather than maintaining a single monolithic WAL file:
+1. Divide the log into smaller fixed-size chunks (e.g., **100 MB per WAL file**).
+2. Store key location as `(Key, WAL_File_ID, Offset)` in the RAM index.
+3. **Active WAL**: Receives all incoming write operations.
+4. **Inactive WALs**: Closed files that serve read requests and undergo background compaction.
 
 ```
-Level 0:  [SSTable-1] [SSTable-2] [SSTable-3]
-          (multiple can overlap)
-          
-          ↓ (compact when count exceeds threshold)
-          
-Level 1:  [Combined SSTable]
-          (sorted, no overlaps)
-          
-          ↓ (compact when size exceeds threshold)
-          
-Level 2:  [Another Combined SSTable]
+Write Operations ──► Active WAL (wal-0002.log) ──► Append O(1)
+                            │
+                      (Full > 100MB)
+                            ▼
+              Rotate to Inactive WAL ──► Eligible for Compaction
 ```
 
-**Note**: SSTables are immutable, so we can only create it and search on it, not update. Compaction allows us to eventually clean up old data.
+---
 
-## 9. When to Add Data to Offset Hashmap
+## 4. Memtable Architecture
 
-### Key Decision: Timing of Hashmap Updates
-
-**Option A: Immediate Write (During Append to WAL)**
-```
-Write key-value pair to WAL file → Immediately add to offset hashmap
-Problem: High overhead, compaction can work on old files
-```
-
-**Option B: After WAL is Full**
-```
-When WAL reaches max size → Dump all data in a new file → Update hashmap
-Advantage: Batch updates, reduces hashmap update frequency
-Disadvantage: Larger WAL files; latest data stays in WAL longer
-```
-
-### Best Practice
-- Once your WAL file becomes inactive (no more writes), dump its data into an arrayed form.
-- Store unique keys in sorted order to optimize for searches.
-- The key advantage: Unique keys from memtable + sorted data = faster searches without full table scans.
-
-**Compaction Timing**:
-- All write operations happen in the active WAL file.
-- Reads can happen in any WAL file.
-- When no space is left, trigger compaction on old files.
-
-## 10. How Updates Work
-
-When updating an existing key:
-
-1. **Mark as new entry in memtable**: Don't override existing data; add a new entry with a sentinel value (like `{sentinel: <value>}` or a special marker).
-
-2. **Append to WAL**: Write the update to the active WAL file with a timestamp.
-
-3. **Set in Hashmap**: Record the key with the WAL file and offset.
-
-4. **During compaction**:
-   - If multiple entries exist for the same key, keep the latest one (identified by timestamp or order).
-   - Discard older entries.
-
-### Read Optimization with LRU Cache
-
-If a key is frequently accessed, an LRU cache can be maintained for faster retrieval:
+The **Memtable** is an in-memory sorted data structure (such as a Red-Black Tree or SkipList) that acts as the RAM representation of the active WAL.
 
 ```
-Cache (in-memory LRU):
-├─ For frequently accessed keys, maintain a hashmap of data & address node
-├─ If a key is accessed, move its node to the "hot" end
-├─ When cache is full, evict the least-recently-used item
-└─ Searches are O(1) with LRU optimization on reads
+Dual Write Pattern:
+Write Request ──┬──► Write to Memtable (RAM: Fast, Sorted, Unique Keys)
+                │
+                └──► Append to Active WAL (Disk: Durability & Recovery)
 ```
 
-## 11. Handling Duplicates Across Multiple Levels
+### Why Memtable in RAM?
+1. **Instant Writes & Reads**: Avoids disk pointer overhead and in-place update limitations.
+2. **Key Uniqueness**: Keeps only unique keys or latest values in memory.
+3. **Prepared Flush**: Naturally maintains keys in sorted order, simplifying disk flushes.
 
-### Problem
-- Within a single SSTable: No duplicates (immutable, sorted).
-- Between multiple SSTables: Duplicates can exist (newer SSTable might have updated value).
+---
 
-### Solution
-Maintain a **priority order**:
-1. Check memtable first.
-2. Check Level 0 SSTables (newest).
-3. Check Level 1 SSTables.
-4. And so on (older levels).
+## 5. SSTables (Sorted Set Tables) & Flush Workflow
 
-This way, the latest value is always found first.
+When an active WAL / Memtable reaches its size limit (e.g., 100 MB), it is converted into an **SSTable (Sorted Set Table)**.
 
-## 12. Support for Partitioning and Sharding
-
-SSTables work well with sharding because:
-1. **Immutable data**: No cross-server consistency issues during splits.
-2. **Easy replication**: Copy SSTables to replicas; all are identical.
-3. **Data locality**: Each server holds a subset of partitioned keys.
-4. **Faster recombination**: Merging sorted SSTables is like merge-sort.
-
-### Architecture with Sharding
-```
-Master Node (writes)
-       ↓
-Write to WAL & Memtable
-       ↓
-Flush to SSTable
-       ↓
-Replicate to Replica Nodes (read-only)
-       ↓
-Each node: Independent
-       ↓
-compaction & LRU cache
-```
-
-## 13. LSM Trees in Action (RocksDB, Cassandra, DynamoDB)
-
-### RocksDB (Embedded Key-Value Store)
-- Used in Facebook's data infrastructure.
-- Built on LSM tree principles with configurable compaction strategies.
-
-### Cassandra (Distributed Database)
-- Uses SSTable format for immutable data.
-- Compaction happens periodically to reclaim disk space.
-
-### DynamoDB (AWS Managed Service)
-- Internally uses LSM-like structures for high throughput on SSD.
-
-### Why LSM Over B-trees?
-- **B-trees**: Optimized for random reads; writes require random disk I/O (slow).
-- **LSM**: Optimized for sequential writes; reads trade off for write throughput.
-
-In modern systems with high write throughput, LSM trees are preferred.
-
-## 14. Practical Design Choices
-
-### When to Use WAL
-- **Always**: Durability is critical. WAL ensures no data loss even after a crash.
-- Overhead: Sequential writes are fast, minimal performance penalty.
-
-### When to Use SSTables
-- **Always**: Immutable files simplify concurrency and compaction.
-- Alternative: In-memory only (loses durability; use for caches).
-
-### When to Use Bloom Filters
-- **Optimize read performance**: When negative lookups are common (keys that don't exist).
-- Space cost: ~1 byte per key, negligible compared to savings.
-
-### When to Use LRU Caching
-- **Hot working sets**: Cache the top 1-5% of frequently accessed keys.
-- Memory limit: Keep cache size bounded to prevent OOM.
-
-## 15. Design Patterns Summary
+### SSTable Characteristics
+- **Sorted**: Keys are stored in strictly ascending sorted order.
+- **Set**: Duplicate keys are removed during the flush; only unique values are written.
+- **Immutable**: Once written to disk, an SSTable is never modified.
 
 ```
-┌────────────────────────────────────────────────────┐
-│         Database Design Pattern (LSM)              │
-├────────────────────────────────────────────────────┤
-│  Write Path:                                       │
-│  User Data → WAL (durability) → Memtable (fast)   │
-│             ↓                                      │
-│  Memtable Full? → Flush to SSTable (immutable)    │
-│                                                    │
-│  Read Path:                                        │
-│  LRU Cache? → Memtable? → SSTables (bloom + idx)  │
-│                                                    │
-│  Background:                                       │
-│  Compaction (merge SSTables, remove stale data)   │
-└────────────────────────────────────────────────────┘
+Memtable (RAM, Sorted) ──► Flush to Disk ──► New SSTable (Immutable, Sorted, Unique)
+                                                    │
+                                                    ▼
+                                           Clear Active WAL & Reset Memtable
 ```
 
-**Note**: This chapter is based on handwritten notes analyzing modern database internals. The concepts apply to any system dealing with high-throughput writes and consistent reads at scale.
+### Memtable Eviction & Memory Control
+Memtables operate within bounded memory limits. When full, an eviction policy (LRU / LFU / FIFO) manages memory state while data persists safely inside immutable SSTables on disk.
+
+---
+
+## 6. Multi-Level Background Compaction
+
+Over time, multiple SSTables accumulate, causing duplicate entries across different file generations and increasing read latency.
+
+### Compaction Mechanics
+Compaction runs continuously in background threads to merge multiple SSTables using a **K-Way Merge Sort**:
+
+```
+SSTable 1 (Sorted): [ key_a: v1, key_c: v1, key_e: v1 ]
+SSTable 2 (Sorted): [ key_a: v2, key_c: v2, key_f: v1 ]
+                             │
+                             ▼ (Merge-Sort & Deduplicate)
+New SSTable (Sorted): [ key_a: v2, key_c: v2, key_e: v1, key_f: v1 ]
+```
+
+1. Load 2 or more SSTables into RAM buffers.
+2. Merge sorted arrays while maintaining the **newest entry** for duplicate keys and discarding older values.
+3. Write the merged result as a single consolidated SSTable.
+4. Delete old input SSTables from disk.
+
+### Hierarchical Compaction Tree
+
+```
+Level 0 (Uncompacted):  [ SSTable 1 ]  [ SSTable 2 ]  [ SSTable 3 ]
+                             └──────────────┬──────────────┘
+                                            ▼ (Background Compaction)
+Level 1 (Merged):               [ SSTable 1_2_3 (Larger, Sorted) ]
+```
+
+- **Non-Blocking Writes**: Compaction operates strictly on inactive SSTables in the background, allowing incoming writes to active WAL/Memtable without locking.
+
+---
+
+## 7. Sparse Indexing & Elimination of Global Hashmaps
+
+As dataset size grows into terabytes/petabytes, maintaining a global RAM hashmap for every key becomes infeasible.
+
+### Sparse Index Concept
+Instead of indexing every single key, a **Sparse Index** stores only the **first key of each disk block** alongside its block offset.
+
+```
+Disk Storage (SSTable Blocks):
+┌──────────────────────────┬──────────────────────────┬──────────────────────────┐
+│ Block 1 (Keys: "a".."f") │ Block 2 (Keys: "g".."m") │ Block 3 (Keys: "n".."z") │
+└──────────────────────────┴──────────────────────────┴──────────────────────────┘
+Offset 0x0000              Offset 0x1000              Offset 0x2000
+
+RAM (Sparse Index):
+┌───────────┬───────────────┐
+│ Key       │ Block Offset  │
+├───────────┼───────────────┤
+│ "a"       │ 0x0000        │
+│ "g"       │ 0x1000        │
+│ "n"       │ 0x2000        │
+└───────────┴───────────────┘
+```
+
+### Search Process with Sparse Index
+To locate key `"k"`:
+1. Binary search the RAM Sparse Index: `"k"` falls between `"g"` (0x1000) and `"n"` (0x2000).
+2. Load only **Block 2** from disk into memory.
+3. Perform a fast in-memory binary search within Block 2.
+4. Reduces disk lookups from $O(\log N)$ file seeks down to a single targeted block read.
+
+---
+
+## 8. Bloom Filters & Deletion Sentinels (Tombstones)
+
+### Bloom Filters for Fast Negative Lookups
+Checking multiple SSTables on disk for a non-existent key causes wasteful disk I/O.
+
+- A **Bloom Filter** is a probabilistic, space-efficient data structure stored alongside each SSTable in RAM.
+- **Behavior**:
+  - Returns **"Definitely Not Present"**: Skip reading the SSTable completely ($O(1)$ savings).
+  - Returns **"Possibly Present"**: Proceed to read the Sparse Index and SSTable block.
+
+---
+
+### Deletion Handling via Sentinel Values (Tombstones)
+Because SSTables are immutable, key deletion cannot remove data in-place on disk.
+
+1. **Delete Operation**: Insert a new record for the key with a **Sentinel Value (Tombstone)**.
+2. **Read Path**: If a query encounters a Sentinel Value, it returns `null` / key not found.
+3. **Compaction Purge**: During background merge compaction, when a Sentinel Value is encountered alongside older entries for that key, all occurrences are permanently removed.
+
+---
+
+## 9. End-to-End LSM Tree Architecture
+
+```
+                                  WRITE PATH
+                                      │
+                                      ▼
+                        ┌───────────────────────────┐
+                        │ Incoming Write Request    │
+                        └─────────────┬─────────────┘
+                                      │
+                  ┌───────────────────┴───────────────────┐
+                  ▼                                       ▼
+     ┌─────────────────────────┐             ┌─────────────────────────┐
+     │ Append to Active WAL    │             │ Update Memtable         │
+     │ (Disk, Durability)      │             │ (RAM, Sorted SkipList)  │
+     └─────────────────────────┘             └────────────┬────────────┘
+                                                          │
+                                                (Memtable Full / Flushed)
+                                                          ▼
+                                             ┌─────────────────────────┐
+                                             │ Write SSTable to Disk   │
+                                             │ (Sorted, Immutable)     │
+                                             └────────────┬────────────┘
+                                                          │
+                                                          ▼
+                                             ┌─────────────────────────┐
+                                             │ Background Compaction   │
+                                             │ & Bloom Filter Build    │
+                                             └─────────────────────────┘
+
+----------------------------------------------------------------------------------
+
+                                  READ PATH
+                                      │
+                                      ▼
+                        ┌───────────────────────────┐
+                        │ Incoming Read Request     │
+                        └─────────────┬─────────────┘
+                                      │
+                                      ▼
+                           Check Memtable (RAM)
+                                      │
+                            [Hit] ───►┴───► [Miss]
+                              │                │
+                        Return Value           ▼
+                                    Check Bloom Filter
+                                               │
+                                     [No] ─────┴─────► [Yes]
+                                      │                 │
+                                Skip SSTable            ▼
+                                              Check Sparse Index (RAM)
+                                                        │
+                                                        ▼
+                                              Read Block from SSTable
+                                                        │
+                                                        ▼
+                                                   Return Value
+```
+
+---
