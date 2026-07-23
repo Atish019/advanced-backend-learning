@@ -330,6 +330,7 @@ Because SSTables are immutable, key deletion cannot remove data in-place on disk
 
 ---
 
+### Summary of System Trade-Offs
 
 | Component | In-Memory (RAM) | On-Disk (HDD/SSD) | Time Complexity | Primary Role |
 | :--- | :--- | :--- | :--- | :--- |
