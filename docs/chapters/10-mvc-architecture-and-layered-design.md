@@ -124,11 +124,50 @@ To resolve MVC limitations and uphold SRP at scale, modern backend architectures
 
 ### Architectural Layer Diagram
 
+```mermaid
+flowchart TD
+    Client["Client App / Browser"] -->|HTTP Request| Routing["Routing Layer"]
+    Routing --> Validation["Validation Layer"]
+    Validation --> Controller["Handlers / Controllers"]
+    Controller --> Service["Service Layer (Business Logic)"]
+    Service --> Repo["DAO / Repositories Layer"]
+    Repo --> DB[("Database (SQL / NoSQL)")]
+
+    subgraph Infrastructure ["Supporting Infrastructure Modules"]
+        Config["Config"]
+        Schema["Schema / Models"]
+        Migrations["Migrations"]
+        Utils["Utils"]
+        DTO["DTO (Data Transfer Objects)"]
+    end
+
+    Repo -.-> Schema
+    Service -.-> DTO
 ```
-Incoming Request ──► [ Routing Layer ] ──► [ Validation Layer ] ──► [ Handlers / Controllers ]
-                                                                             │
-                                                                             ▼
-[ Config ] [ Schema/Models ] [ Migrations ] [ Utils ] [ DTO ] ◄── [ DAO / Repositories ] ◄── [ Service Layer ]
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        MODERN MULTI-TIERED LAYERED ARCHITECTURE                        │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                        │
+│   Client Request ──► ┌────────────────┐     ┌──────────────────┐     ┌──────────────┐  │
+│                      │ Routing Layer  │ ──► │ Validation Layer │ ──► │ Controller   │  │
+│                      └────────────────┘     └──────────────────┘     └──────┬───────┘  │
+│                                                                             │          │
+│                                                                             ▼          │
+│    ┌──────────────┐     ┌─────────────────┐     ┌───────────────────────────────────┐  │
+│    │ Database     │ ◄── │ DAO Repository  │ ◄── │ Service Layer (Business Logic)    │  │
+│    │ (SQL / NoSQL)│     │ Layer           │     │                                   │  │
+│    └──────────────┘     └─────────────────┘     └───────────────────────────────────┘  │
+│                                                                                        │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│                           SUPPORTING INFRASTRUCTURE MODULES                            │
+│                                                                                        │
+│   ┌──────────┐  ┌───────────────┐  ┌────────────┐  ┌─────────┐  ┌───────────────────┐  │
+│   │  Config  │  │ Schema/Models │  │ Migrations │  │  Utils  │  │ DTO (Data Transfer│  │
+│   │          │  │               │  │            │  │         │  │     Object)       │  │
+│   └──────────┘  └───────────────┘  └────────────┘  └─────────┘  └───────────────────┘  │
+└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
