@@ -170,3 +170,85 @@ Incoming Request ──► [ Routing Layer ] ──► [ Validation Layer ] ─�
 - Decouples client payload contracts from internal database storage structures.
 
 ---
+
+## 4. DTOs & Repository Abstraction
+
+### DTOs vs. Database Schemas
+Network Data Transfer Objects (DTOs) specify what client applications send and receive. DB Schemas define how data is persisted. Keeping DTOs separate from DB Schemas allows internal database refactoring without breaking external API contracts.
+
+---
+
+### Anti-Pattern: Direct DB Access from Service Layer
+Directly coupling the Service Layer to a specific database vendor is a bad design practice:
+
+```
+❌ Anti-Pattern (Direct Coupling):
+Service Layer ───► Direct MySQL Query ("SELECT * FROM tweets...")
+Service Layer ───► Direct MongoDB Call ("db.tweets.find(...)")
+```
+- **Why this fails**: If the team decides to migrate from MySQL to MongoDB or PostgreSQL, every single business logic file in the Service Layer must be rewritten!
+
+---
+
+### Correct Pattern: Repository Pattern (DB Abstraction)
+
+```
+✅ Correct Layered Design (Decoupled Repository):
+Service Layer ──► Repository Contract (createTweet) ──┬──► MySQL Implementation   ("INSERT INTO TWEETS...")
+                                                      └──► MongoDB Implementation ("db.tweets.insert(...)")
+```
+
+#### Example Workflow:
+1. **Service Layer** requests tweet creation:
+   ```javascript
+   // Service Layer calls generic repository method
+   const newTweet = await tweetRepository.createTweet({ text, userId });
+   ```
+
+2. **Repository Layer** executes vendor-specific database command:
+   - **MySQL Repo**:
+     ```sql
+     INSERT INTO TWEETS (text, userId) VALUES ('Hello World', 123);
+     ```
+   - **MongoDB Repo**:
+     ```javascript
+     db.tweets.insert({ text: 'Hello World', userId: 123 });
+     ```
+
+3. **Repository** converts database output into a standard DTO and returns it to the Service:
+   ```javascript
+   {
+     id: "12345",
+     text: "Hello World",
+     userId: "atish019",
+     createdAt: "2026-07-25T18:30:00Z",
+     updatedAt: "2026-07-25T18:30:00Z"
+   }
+   ```
+
+---
+
+### Benefits of Layered Architecture & Repository Pattern
+- **Vendor Agnostic**: Swap underlying storage engines (MySQL $\rightarrow$ MongoDB $\rightarrow$ PostgreSQL) by updating only the Repository layer.
+- **Testability**: Service Layer can be unit tested easily by mocking Repository interfaces without needing a real database connection.
+- **Maintainability**: Strict separation of concerns keeps every module focused on a single responsibility (SRP).
+
+---
+
+## 5. Summary & Key Takeaways
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                   Layered Architecture Summary                         │
+├───────────────────┬────────────────────────────────────────────────────┤
+│ Layer             │ Main Responsibility                                │
+├───────────────────┼────────────────────────────────────────────────────┤
+│ Routing           │ Map HTTP endpoint/verb to controller handler       │
+│ Validation        │ Validate request body, headers, and query params   │
+│ Controller        │ Receive HTTP request, delegate, send HTTP response │
+│ Service           │ Execute core business and algorithmic logic        │
+│ Repository (DAO)  │ Perform database queries and data persistence      │
+│ Schema/Models     │ Define database data structures and ORM maps       │
+│ DTO               │ Define network API request/response contracts      │
+└───────────────────┴────────────────────────────────────────────────────┘
+```
