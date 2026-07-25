@@ -14,6 +14,7 @@ This folder contains the chapter-wise notes and learning references for this Nod
 - [Chapter 7: Networking Basics](chapters/07-networking-basics.md)
 - [Chapter 8: Latency and Scaling](chapters/08-latency-and-scaling.md)
 - [Chapter 9: Database Design and LSM Trees](chapters/09-database-design-and-lsm-trees.md)
+- [Chapter 10: MVC Architecture and Layered Design](chapters/10-mvc-architecture-and-layered-design.md)
 
 ## Learning Workflow
 
