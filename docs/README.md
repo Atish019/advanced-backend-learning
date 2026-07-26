@@ -15,6 +15,7 @@ This folder contains the chapter-wise notes and learning references for this Nod
 - [Chapter 8: Latency and Scaling](chapters/08-latency-and-scaling.md)
 - [Chapter 9: Database Design and LSM Trees](chapters/09-database-design-and-lsm-trees.md)
 - [Chapter 10: MVC Architecture and Layered Design](chapters/10-mvc-architecture-and-layered-design.md)
+- [Chapter 11: HTTP Protocol and API Architecture](chapters/11-http-protocol-and-api-design.md)
 
 ## Learning Workflow
 
