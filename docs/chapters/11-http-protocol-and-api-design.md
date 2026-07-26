@@ -123,3 +123,101 @@ HTTP communication is strictly structured around paired **Requests** (sent by cl
 ```
 
 ---
+
+## 4. API (Application Programming Interface) Fundamentals
+
+### What is an API?
+An **API (Application Programming Interface)** is an abstraction mechanism that allows external systems and clients to interact with software functionality without exposing internal database schemas or implementation details.
+
+```mermaid
+flowchart LR
+    User["Client / Browser / React Code"] -->|API Request (Contract)| API["API Contract Interface"]
+    API -->|Abstracted Operation| Banking["Software System / Banking Backend"]
+    Banking -->|Data Response| API
+    API -->|Structured JSON Response| User
+```
+
+### Real-World Analogy: Banking Abstraction
+- A bank customer uses an ATM or mobile banking app to withdraw money or check balances.
+- The customer does **not** know how the bank's internal ledger database, vault systems, or audit compliance scripts work.
+- The dedicated interface provided by the bank (ATM / App UI) is a **contract** that abstracts internal operations while exposing allowed interactions securely.
+
+---
+
+## 5. API Architectural Styles & The API Contract
+
+When building backend services, developers choose an API architectural pattern to structure client-server contracts:
+
+```
+                          How We Write APIs
+                                 │
+     ┌──────────────┬────────────┼────────────┬──────────────┐
+     ▼              ▼            ▼            ▼              ▼
+   SOAP           OData        REST         gRPC          GraphQL
+```
+
+### Top 3 Industry Standard API Paradigms
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Top 3 API Architectures                         │
+├─────────────┬──────────────────────────────────────────────────────────┤
+│ Pattern     │ Characteristics & Common Use-Cases                       │
+├─────────────┼──────────────────────────────────────────────────────────┤
+│ 1. REST     │ Representational State Transfer. Uses standard HTTP      │
+│             │ verbs (GET, POST), URLs, and JSON payloads. Universal    │
+│             │ choice for web and mobile APIs.                          │
+├─────────────┼──────────────────────────────────────────────────────────┤
+│ 2. gRPC     │ High-performance RPC framework by Google. Built on       │
+│             │ Protocol Buffers (Protobuf) over HTTP/2. Ideal for       │
+│             │ microservice-to-microservice communication.              │
+├─────────────┼──────────────────────────────────────────────────────────┤
+│ 3. GraphQL  │ Query language for APIs created by Meta. Allows clients  │
+│             │ to request exactly the fields they need in a single      │
+│             │ request, preventing over-fetching/under-fetching.        │
+└─────────────┴──────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Defining the API Contract
+Every API represents a formal **contract** between the client user and the backend system:
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                      API CONTRACT                        │
+├──────────────────────────────────────────────────────────┤
+│ User / Client ──────► [ Defined Contract ] ──────► System│
+│                                                          │
+│ Defines:                                                 │
+│ • Allowed input parameters & payload schema              │
+│ • Expected output data format & structure                │
+│ • Error formats & HTTP status code guarantees            │
+│ • Authentication & authorization rules                   │
+└──────────────────────────────────────────────────────────┘
+```
+
+The system defines this contract so that both frontend applications (React, iOS, Android) and third-party integrators can communicate predictably with the backend.
+
+---
+
+## 6. Chapter Summary
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                         HTTP & API Architecture                        │
+├───────────────────┬────────────────────────────────────────────────────┤
+│ Topic             │ Core Takeaway                                      │
+├───────────────────┼────────────────────────────────────────────────────┤
+│ HTTP Protocol     │ Layer 7 reliable transport over TCP/UDP carrying   │
+│                   │ general-purpose payloads (JSON, HTML, media).      │
+│ HTTP Versions     │ Evolved from HTTP/1.0 (non-persistent) to 1.1      │
+│                   │ (streaming), HTTP/2 (multiplexing), and HTTP/3     │
+│                   │ (QUIC/UDP).                                        │
+│ Request/Response  │ Structured into Method, URL, Headers, Body, and    │
+│                   │ Status Codes.                                      │
+│ API Contract      │ Abstraction layer defining how clients interact    │
+│                   │ with system capabilities.                          │
+│ API Standards     │ REST, gRPC, and GraphQL are the top 3 paradigms.   │
+└───────────────────┴────────────────────────────────────────────────────┘
+```
