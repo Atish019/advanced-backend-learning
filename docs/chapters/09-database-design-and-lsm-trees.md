@@ -1,6 +1,6 @@
-# Chapter 09 — Database Design and LSM Trees
+# Day 9 — Database Design and LSM Trees
 
-This chapter covers the end-to-end design of modern high-throughput databases and Log-Structured Merge (LSM) trees, synthesized from fundamental principles to complete architecture.
+End-to-end design of modern high-throughput databases and Log-Structured Merge (LSM) trees, from fundamental principles to complete architecture.
 
 ---
 

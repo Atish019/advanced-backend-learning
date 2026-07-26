@@ -1,6 +1,6 @@
-# Chapter 07 — Networking Basics
+# Day 7 — Networking Basics
 
-This chapter is a concise, practical summary of networking concepts and the network stack based on my handwritten notes.
+A concise, practical summary of networking concepts and the network stack.
 
 ## Overview
 - A network is a connection of entities (machines) that share resources and data.
@@ -11,7 +11,7 @@ Two popular models are used to reason about how protocols and applications inter
 - OSI model (5/7-layer conceptual model)
 - TCP/IP model (practical 4/5-layer model used widely)
 
-This chapter uses the simplified 5-layer view (Application, Transport, Network, Data Link, Physical).
+These notes use the simplified 5-layer view (Application, Transport, Network, Data Link, Physical).
 
 ## The 5-layer network stack (client → server)
 1. Application layer

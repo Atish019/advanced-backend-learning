@@ -1,4 +1,4 @@
-# Chapter 6: Package, Library, and Module Management
+# Day 6 — Package, Library, and Module Management
 
 ## 1. Module vs Package vs Library
 - **Module**: A single file or unit of code that exports functionality.

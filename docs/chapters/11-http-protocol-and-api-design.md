@@ -1,6 +1,6 @@
-# Chapter 11 — HTTP Protocol and API Architecture
+# Day 11 — HTTP Protocol and API Architecture
 
-This chapter explores the Hypertext Transfer Protocol (HTTP), its historical evolution, request/response anatomy, and the fundamentals of API (Application Programming Interface) design, based on handwritten notes.
+HTTP protocol: its historical evolution, request/response anatomy, and the fundamentals of API (Application Programming Interface) design.
 
 ---
 
@@ -201,7 +201,7 @@ The system defines this contract so that both frontend applications (React, iOS,
 
 ---
 
-## 6. Chapter Summary
+## 6. Day Summary
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐

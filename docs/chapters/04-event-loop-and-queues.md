@@ -1,4 +1,4 @@
-# Chapter 4: Modules in Node.js
+# Day 4 — Modules in Node.js
 
 ## 1. What is a Module?
 A module is a self-contained unit of code that performs a specific task. Modules help keep applications organized and maintainable.

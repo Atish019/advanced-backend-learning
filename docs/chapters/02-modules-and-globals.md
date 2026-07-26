@@ -1,4 +1,4 @@
-# Chapter 2: Globals, Modules, and Thread Behavior
+# Day 2 — Globals, Modules, and Thread Behavior
 
 ## 1. Global Objects in Node.js
 Node.js provides several important globals:

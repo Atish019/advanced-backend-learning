@@ -1,4 +1,4 @@
-# Chapter 1: Node.js Introduction
+# Day 1 — Node.js Introduction
 
 ## 1. What is Node.js?
 Node.js is a JavaScript runtime built on the V8 engine that allows developers to execute JavaScript outside the browser. It is widely used for building backend applications, APIs, real-time systems, and command-line tools.
@@ -37,7 +37,7 @@ A typical web application follows a client-server model:
 
 Node.js is commonly used on the server side to handle these requests efficiently.
 
-## 6. Why This Chapter Matters for Backend Development
+## 6. Why This Day's Learning Matters for Backend Development
 Understanding the runtime, execution model, and architecture of Node.js helps developers write faster, more scalable server applications.
 
 ## 7. Verified from This Project

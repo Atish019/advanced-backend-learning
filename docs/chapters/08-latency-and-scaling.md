@@ -1,6 +1,6 @@
-# Chapter 08 — Latency, Storage, and Scaling
+# Day 8 — Latency, Storage, and Scaling
 
-This chapter is a concise, practical summary of latency, storage, and scaling concepts based on my handwritten notes.
+A concise, practical summary of latency, storage, and scaling concepts.
 
 ## What is latency
 - Latency is the total time (delay) experienced from the start of a request until the response is received.

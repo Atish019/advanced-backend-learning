@@ -37,7 +37,7 @@ for advanced backend development:
 - [demosample.js](demosample.js): practical examples for I/O behavior and async flow
 - [File_IO_in_NodeJS](File_IO_in_NodeJS): file system and file reading examples
 - [NodeJS_Modules](NodeJS_Modules): CommonJS and ES Module examples
-- [docs](docs): chapter-wise study notes and technical documentation
+- [docs](docs): day-wise study notes and technical documentation
 
 ## Learning Approach
 This repository is meant for continuous learning and practical understanding. The workflow is simple:

@@ -1,4 +1,4 @@
-# Chapter 3: File System, Libuv, and the Event Loop
+# Day 3 — File System, Libuv, and the Event Loop
 
 ## 1. File System in Node.js
 Node.js uses the fs module to work with files. Common operations include reading, writing, appending, deleting, and renaming files.

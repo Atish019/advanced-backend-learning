@@ -1,4 +1,4 @@
-# Chapter 5: Modules in Node.js
+# Day 5 — Modules in Node.js
 
 ## 1. What is a Module?
 A module is a reusable block of code whose existence does not accidentally impact other code. Node.js has a set of built-in modules, and you can create your own modules to use in various applications.

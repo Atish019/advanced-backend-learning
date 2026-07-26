@@ -1,6 +1,6 @@
-# Chapter 10 — MVC Architecture and Layered Design
+# Day 10 — MVC Architecture and Layered Design
 
-This chapter explores application design patterns, starting from traditional Model-View-Controller (MVC) architecture to modern Multi-Tiered / Layered Architecture, based on handwritten notes.
+Application design patterns: from traditional Model-View-Controller (MVC) architecture to modern Multi-Tiered / Layered Architecture.
 ---
 
 ## 1. Fundamentals of MVC Architecture
