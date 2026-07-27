@@ -260,3 +260,21 @@ API-Version: v2
 
 ---
 
+## Day Summary
+
+```
+┌───────────────────────────────┬────────────────────────────────────────────────────┐
+│ Topic                         │ Core Takeaway                                      │
+├───────────────────────────────┼────────────────────────────────────────────────────┤
+│ REST Definition               │ Recommendations for creating APIs.                 │
+│                               │ Any language can implement REST.                   │
+│ REST Principles               │ Platform independence + Loose coupling.            │
+│ JSON                          │ Key-value format for data exchange in REST.        │
+│ Resource Design               │ URLs are nouns (resources), HTTP verbs are actions.│
+│ CRUD Mapping                  │ POST=create, GET=read, PUT=update, DELETE=delete.  │
+│ Colon Syntax                  │ :paramName marks a variable URL segment.           │
+│ Stateless                     │ Every request is independent — no server memory.   │
+│ Send Data (3 Ways)            │ URL params, Request body, Query params.            │
+│ API Versioning                │ /api/v1/... in URL, or via request headers.        │
+└───────────────────────────────┴────────────────────────────────────────────────────┘
+```
