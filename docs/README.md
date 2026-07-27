@@ -16,6 +16,7 @@ This folder contains the day-wise notes and learning references for this Node.js
 - [Day 9: Database Design and LSM Trees](chapters/09-database-design-and-lsm-trees.md)
 - [Day 10: MVC Architecture and Layered Design](chapters/10-mvc-architecture-and-layered-design.md)
 - [Day 11: HTTP Protocol and API Architecture](chapters/11-http-protocol-and-api-design.md)
+- [Day 12: REST API Design](chapters/12-rest-api-design.md)
 
 ## Learning Workflow
 
