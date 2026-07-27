@@ -127,3 +127,136 @@ Resource names in URLs are always **plural**:
 ```
 
 ---
+
+## 5. HTTP Verb + URL = CRUD Mapping
+
+By combining the **URL (resource)** with the **HTTP method (verb)**, you can immediately understand what the API is doing — without extra words in the URL.
+
+```
+┌───────────────────────────────────┬────────────┬────────────────────────────────────────────────────┐
+│ URL Pattern                       │ HTTP Verb  │ What it does                                       │
+├───────────────────────────────────┼────────────┼────────────────────────────────────────────────────┤
+│ /resourceName                     │ POST       │ Create a new resource record                       │
+│ /resourceName                     │ GET        │ Fetch all records of the resource                  │
+│ /resourceName                     │ DELETE     │ Delete all records of the resource                 │
+│ /resourceName                     │ PUT        │ Bulk update all records of the resource            │
+│ /resourceName/:resourceId         │ GET        │ Fetch one specific record by its ID                │
+└───────────────────────────────────┴────────────┴────────────────────────────────────────────────────┘
+```
+
+### Colon Syntax — Dynamic URL Parameters
+
+A **colon (`:`)** in a URL means that segment is **variable** and can take any value at runtime.
+
+```
+/users/:user_id
+         ↑
+    Variable segment — at runtime this becomes /users/42, /users/105, etc.
+```
+
+### Nested Resources — Real Examples
+
+```
+/users/:user_id/bookings + POST
+→ Create a new booking for a specific user
+
+/users/:user_id/orders/:order_id + DELETE
+→ Delete the order (order_id) belonging to the given user (user_id)
+```
+
+---
+
+## 6. REST API Response — Status Codes
+
+Every REST API response must return a **status code** — a numeric representation of what happened.
+
+```
+┌───────────┬──────────────────────────────────────────────┐
+│ Range     │ Meaning                                      │
+├───────────┼──────────────────────────────────────────────┤
+│ 2xx       │ Success (200 OK, 201 Created, 204 No Content)│
+│ 3xx       │ Redirection                                  │
+│ 4xx       │ Client Error (400 Bad Request, 404 Not Found)│
+│ 5xx       │ Server Error (500 Internal Server Error)     │
+└───────────┴──────────────────────────────────────────────┘
+```
+
+---
+
+## 7. REST APIs are Stateless
+
+REST APIs must be **stateless**. This means:
+
+- Each HTTP request is **completely independent** of all others.
+- The server does **not remember** any previous request.
+- Every request must carry all the information the server needs (e.g., auth token in headers).
+
+```
+Request 1: GET /users/42       ─┐
+Request 2: GET /tweets/88      ─┼─ Each is independent. Server treats each as fresh.
+Request 3: DELETE /orders/5    ─┘
+```
+
+---
+
+## 8. Three Ways to Send Data in a REST API
+
+```
+┌─────────────────┬────────────────────────────────────────────────────────────┐
+│ Method          │ Description                                                │
+├─────────────────┼────────────────────────────────────────────────────────────┤
+│ 1. URL Params   │ Embedded directly in the URL path.                         │
+│                 │ Example: /customers/1/orders                               │
+│                 │ Saved in browser history.                                  │
+├─────────────────┼────────────────────────────────────────────────────────────┤
+│ 2. Request Body │ Data sent as the body of POST / PUT / PATCH requests.      │
+│                 │ Can carry complex data (text, JSON, XML, binary).          │
+│                 │ In REST APIs, always use JSON as the body format.          │
+│                 │ NOT saved in browser history.                              │
+├─────────────────┼────────────────────────────────────────────────────────────┤
+│ 3. Query Params │ Key-value pairs appended to the URL after `?`.             │
+│                 │ Example: /products?company=samsung&category=mobile         │
+│                 │ Saved in browser history.                                  │
+│                 │ Used to pass filtering/search criteria.                    │
+└─────────────────┴────────────────────────────────────────────────────────────┘
+```
+
+Visual comparison:
+
+```
+URL Params   → /customers/1/orders
+                         ↑ part of the path
+
+Query Params → /products?company=samsung&category=mobile
+                         ↑ key=value pairs after ?
+
+Request Body → { "name": "Atish", "age": 24 }
+               ↑ inside HTTP request body — not visible in URL
+```
+
+---
+
+## 9. API Versioning
+
+It is **recommended to version your APIs**, with version info as part of the URL.
+
+```
+/api/v1/products
+/api/v3/orders/3/route
+  ↑
+  Tells the client:
+  - This is an API URL (not a web page URL)
+  - Which version of the API contract is being used
+```
+
+When you release breaking changes, old clients continue using `/v1/`, new clients use `/v2/`.
+
+**Alternative:** API version can also be sent via **request headers**:
+
+```
+Accept: application/vnd.api+json;version=2
+API-Version: v2
+```
+
+---
+
