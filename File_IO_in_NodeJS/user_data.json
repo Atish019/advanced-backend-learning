@@ -1,0 +1,28 @@
+{
+  "status": "success",
+  "statusCode": 200,
+  "data": {
+    "user": {
+      "id": 101,
+      "username": "atish019",
+      "email": "atish@example.com",
+      "isVerified": true,
+      "roles": ["admin", "developer"],
+      "profile": {
+        "fullName": "Atish Kumar",
+        "company": "Qubittron",
+        "bio": "Backend Engineering & Node.js Learner",
+        "avatarUrl": null
+      },
+      "stats": {
+        "followersCount": 1250,
+        "followingCount": 180,
+        "reputationScore": 4.95
+      }
+    }
+  },
+  "metadata": {
+    "serverTime": "2026-07-31T22:49:09Z",
+    "apiVersion": "v1"
+  }
+}
