@@ -59,7 +59,7 @@ JSON has **nothing to do with JavaScript** itself. The name is just because data
 
 JSON is a **bunch of key-value pairs** that describe data. A JSON file uses the `.json` extension.
 
-### Complete JSON Structure & Supported Data Types
+### Supported Data Types in JSON
 
 A valid JSON structure supports six fundamental data types:
 1. **String**: Double-quoted text (e.g., `"atish019"`).
@@ -68,37 +68,6 @@ A valid JSON structure supports six fundamental data types:
 4. **Array**: Ordered list of values wrapped in brackets `[...]`.
 5. **Object**: Nested key-value structure wrapped in braces `{...}`.
 6. **Null**: Explicit empty value (`null`).
-
-```json
-{
-  "status": "success",
-  "statusCode": 200,
-  "data": {
-    "user": {
-      "id": 101,
-      "username": "atish019",
-      "email": "atish@example.com",
-      "isVerified": true,
-      "roles": ["admin", "developer"],
-      "profile": {
-        "fullName": "Atish Kumar",
-        "company": "Qubittron",
-        "bio": "Backend Engineering & Node.js Learner",
-        "avatarUrl": null
-      },
-      "stats": {
-        "followersCount": 1250,
-        "followingCount": 180,
-        "reputationScore": 4.95
-      }
-    }
-  },
-  "metadata": {
-    "serverTime": "2026-07-31T22:49:09Z",
-    "apiVersion": "v1"
-  }
-}
-```
 
 ### JSON vs XML — Comparison
 
@@ -118,9 +87,9 @@ XML (verbose, tag-based):
 
 REST APIs use JSON because it is compact, easy to parse, and natively supported in every major language and browser.
 
-### Verified from This Project
-- Complete JSON data file: [File_IO_in_NodeJS/user_data.json](../../File_IO_in_NodeJS/user_data.json)
-- Runnable Node.js JSON parsing & serialization script: [File_IO_in_NodeJS/json_demo.js](../../File_IO_in_NodeJS/json_demo.js)
+**Reference**:
+- Check [File_IO_in_NodeJS/user_data.json](../../File_IO_in_NodeJS/user_data.json) for a complete JSON structure example with all data types.
+- Check [File_IO_in_NodeJS/json_demo.js](../../File_IO_in_NodeJS/json_demo.js) to see how Node.js reads, parses (`JSON.parse`), modifies, and serializes (`JSON.stringify`) JSON data.
 
 ---
 
