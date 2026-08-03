@@ -17,6 +17,7 @@ This folder contains the day-wise notes and learning references for this Node.js
 - [Day 10: MVC Architecture and Layered Design](days/10-mvc-architecture-and-layered-design.md)
 - [Day 11: HTTP Protocol and API Architecture](days/11-http-protocol-and-api-design.md)
 - [Day 12: REST API Design](days/12-rest-api-design.md)
+- [Day 13: TypeScript Fundamentals](days/13-typescript-fundamentals.md)
 
 ## Learning Workflow
 
