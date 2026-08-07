@@ -5,7 +5,6 @@ class Person {
     }
 }
 
-
 class node<T> {
     data: T;
     next: node<T> | null
@@ -14,7 +13,6 @@ class node<T> {
         this.next = null;
     }
 }
-
 
 class LinkedList<T> {
 
@@ -45,7 +43,7 @@ class LinkedList<T> {
 
 let ll = new LinkedList<Person>();
 
-ll.addAtHead(new Person("sanket"));
+ll.addAtHead(new Person("Ankit"));
 ll.addAtHead(new Person("sarthak"));
 ll.addAtHead(new Person("jd"));
 ll.addAtHead(new Person("tanmay"));
