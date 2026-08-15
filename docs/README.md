@@ -20,6 +20,7 @@ This folder contains the day-wise notes and learning references for this Node.js
 - [Day 13: TypeScript Fundamentals](days/13-typescript-fundamentals.md)
 - [Day 14: TypeScript Object Types, Enums, Classes & Interface](days/14-typescript-object-types-classes-interfaces.md)
 - [Day 15: TypeScript Generics & Interoperability](days/15-typescript-generics-and-interoperability.md)
+- [Day 16: Building REST APIs with Native HTTP Module](days/16-building-rest-api-with-native-http-module.md)
 
 ## Learning Workflow
 
